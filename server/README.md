@@ -1,85 +1,93 @@
-# Getting started with your app
+<p align="right">
+  <a href="https://amplication.com" target="_blank">
+    <img alt="amplication-logo" height="70" alt="Amplication Logo" src="https://amplication.com/images/logo.svg"/>
+  </a>
+</p>
 
-## Available Scripts
+# Introduction
 
-In the `server` subdirectory, you can run:
+This service was generated with Amplication. The server-side of the generated project. This component provides the different backend services - i.e., REST API, authentication, authorization, logging, data validation and the connection to the database. Additional information about the server component and the architecture around it, can be found on the [documentation](https://docs.amplication.com/guides/getting-started) site.
 
-### `npm start`
+## Getting started
 
-Runs the app in development mode.
-By default, it is accessible at http://localhost:3000
+Follow the steps below to get the service up and running.
 
-### `npm test`
+### Step 1: Scripts - pre-requisites
 
-Runs tests.
+1. Install the .NET SDK from [here](https://dotnet.microsoft.com/download)
+2. Install the .NET Core tools by running the following command:
 
-### `npm run build`
-
-Builds the app for production in the `dist` folder.
-
-Your app is ready to be deployed!
-
-## Environment Variables:
-
-| Environment          | Description                              | Value                                                       |
-| -------------------- | ---------------------------------------- | ----------------------------------------------------------- |
-| DEBUG_MODE           | Debug level                              | 1                                                           |
-| POSTGRESQL_URL       | Local database connection URL            | postgresql://admin:admin@localhost:5432/\${SERVICE_DB_NAME} |
-| POSTGRESQL_PORT      | Local database port                      | 5432                                                        |
-| POSTGRESQL_USER      | Local database username                  | admin                                                       |
-| POSTGRESQL_PASSWORD  | Local database password                  | admin                                                       |
-| COMPOSE_PROJECT_NAME | Docker Compose project name              | amp\_{applicationId}                                        |
-| SERVER_PORT          | The port that the server is listening to | 3000                                                        |
-| JWT_SECRET_KEY       | JWT secret                               | Change_ME!!!                                                |
-| JWT_EXPIRATION       | JWT expiration in days                   | 2d                                                          |
-
-## Getting Started - Local Development
-
-### Prerequisites
-
-Make sure you have Node.js 16.x, npm, and Docker installed.
-
-### Install dependencies
-
-In the `server` subdirectory, run:
-
-```console
-cd server
-npm install
+```sh
+# install the .NET Core tools
+$ dotnet restore .
 ```
 
-### Generate Prisma client
+3. Create the initial migration by running the following command, from the `src` folder:
 
-```console
-npm run prisma:generate
+```sh
+# create and apply initial migration
+# (from within the src folder)
+$ dotnet ef migrations add initialMigration
 ```
 
-### Start database using Docker
+### Step 2: Run the service in development mode
 
-```console
-npm run docker:db
+You can run the service in development mode in two ways:
+
+1. Run the service locally
+2. Run the service in a container
+
+#### Run the service locally
+
+1. Run the service's dependencies in Docker
+
+```sg
+  docker-compose up --build
 ```
 
-### Initialize the database
+2. Run the service by executing the following command from the root folder of the service:
 
-```console
-npm run db:init
+```sh
+  # run from the root folder of the service
+  dotnet run --project ./src
 ```
 
-### Start the server
+#### Run the service in a container
 
-```console
-npm start
+- Run the service and its dependencies in Docker
+
+```sh
+  docker-compose --profile complete up --build
 ```
 
-## Getting Started - Docker Compose
+### Step 3: Access the service
 
-In the `server` subdirectory, run:
+The service will be available at the following URL:
+`http://localhost:5202/`
 
-```console
-npm run compose:up
+You can access the Swagger UI at:
+`http://localhost:5202/swagger/`
+
+To access a specific endpoint, you can use the following format for the URL:
+`http://localhost:5202/api/<controller>/<endpoint>`
+e.g.
+`http://localhost:5202/api/customers/meta`
+
+## Database migrations
+
+### Apply database migration in local development environment
+
+For any database model change, create a new migrations, by running the following command from the `src` folder:
+replace `<new migration name>` with a meaningful name for the migration
+
+```sh
+# (from within the src folder)
+$ dotnet ef migrations add <new migration name>
 ```
 
-## Learn more
+> Migration will be automatically applied on docker compose up
 
-You can learn more in the [Amplication documentation](https://docs.amplication.com/guides/getting-started).
+### Apply database migration in non-local environment
+
+Database modification in non-local environment would be applied through different strategies depending on the requirements.
+Follow Microsoft directions for your strategy: https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/applying
