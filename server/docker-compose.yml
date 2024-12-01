@@ -2,52 +2,58 @@ version: "3"
 services:
   server:
     build:
-      context: .
-      args:
-        NPM_LOG_LEVEL: notice
+      context: ./src
     ports:
-      - "${SERVER_PORT}:3000"
+      - 5202:8080
     environment:
-      POSTGRESQL_URL: "postgres://${POSTGRESQL_USER}:${POSTGRESQL_PASSWORD}@db:5433"
-      BCRYPT_SALT: "${BCRYPT_SALT}"
-      JWT_SECRET_KEY: "${JWT_SECRET_KEY}"
-      JWT_EXPIRATION: "${JWT_EXPIRATION}"
+      ASPNETCORE_HTTP_PORTS: 8080
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DbContext: Data Source=db,1433;Initial
+        Catalog=my-service-db;User
+        Id=sa;Password=SqlAdminChangeMe1234!;TrustServerCertificate=true;
+    restart: on-failure
+    profiles:
+      - complete
     depends_on:
-      - migrate
+      migrate:
+        condition: service_completed_successfully
   migrate:
     build:
-      context: .
-      args:
-        NPM_LOG_LEVEL: notice
-    command: npm run db:init
-    working_dir: /app/server
-    environment:
-      POSTGRESQL_URL: "postgres://${POSTGRESQL_USER}:${POSTGRESQL_PASSWORD}@db:5432"
-      BCRYPT_SALT: "${BCRYPT_SALT}"
+      context: ./src
+    entrypoint: sh
+    command: -c './DbMigrationsBundle --connection "$${MIGRATION_CONNECTION}"'
     depends_on:
       db:
         condition: service_healthy
-  db:
-    image: postgres:12
     environment:
-      POSTGRES_USER: ${POSTGRESQL_USER}
-      POSTGRES_PASSWORD: ${POSTGRESQL_PASSWORD}
-      ports: ${POSTGRESQL_PORT}:5432
-    volumes:
-      - postgres:/var/lib/postgresql/data
+      MIGRATION_CONNECTION: Data Source=db,1433;Initial Catalog=my-service-db;User
+        Id=sa;Password=SqlAdminChangeMe1234!;TrustServerCertificate=true;
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: unless-stopped
+    ports:
+      - 1433:1433
+    environment:
+      MSSQL_SA_PASSWORD: SqlAdminChangeMe1234!
+      ACCEPT_EULA: Y
     healthcheck:
       test:
-        [
-          "CMD",
-          "pg_isready",
-          "-q",
-          "-d",
-          "${POSTGRESQL_DB_NAME}",
-          "-U",
-          "${POSTGRESQL_USER}",
-        ]
-      timeout: 45s
+        - CMD
+        - /opt/mssql-tools/bin/sqlcmd
+        - -S
+        - localhost
+        - -U
+        - sa
+        - -P
+        - SqlAdminChangeMe1234!
+        - -Q
+        - SELECT 1
+        - -b
+        - -o
+        - /dev/null
+      timeout: 5s
       interval: 10s
       retries: 10
+      start_period: 10s
 volumes:
-  postgres: ~
+  mssql: ~
